@@ -126,6 +126,7 @@ function getFirestoreReference() {
 
 const modalOverlay = document.getElementById('imageModal');
 const modalClose = document.getElementById('modalClose');
+const modalMediaWrapper = document.querySelector('.modal-image-wrapper');
 const modalImage = document.getElementById('modalImage');
 const modalTitle = document.getElementById('modalTitle');
 const modalMeta = document.getElementById('modalMeta');
@@ -204,6 +205,22 @@ function getCollections() {
   return Object.entries(collections).map(([name, data]) => ({ name, ...data }));
 }
 
+function isVideoUrl(url) {
+  return typeof url === 'string' && /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url);
+}
+
+function getMediaHtml(item) {
+  if (isVideoUrl(item.url)) {
+    return `
+      <video controls preload="metadata" class="card-media">
+        <source src="${item.url}" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    `;
+  }
+  return `<img src="${item.url}" alt="${item.title}" loading="lazy" />`;
+}
+
 function renderCollections() {
   const collections = getCollections();
   collectionsGrid.innerHTML = '';
@@ -231,7 +248,7 @@ function renderCard(item) {
   const card = document.createElement('article');
   card.className = 'image-card';
   card.innerHTML = `
-    <img src="${item.url}" alt="${item.title}" loading="lazy" />
+    ${getMediaHtml(item)}
     <div class="card-body">
       <h3>${item.title}</h3>
       <p>${item.category} · by ${item.author}</p>
@@ -303,11 +320,10 @@ function deleteImage(item) {
 
 function openModal(item) {
   currentModalItem = item;
-  modalImage.src = item.url;
-  modalImage.alt = item.title;
+  modalMediaWrapper.innerHTML = getMediaHtml(item);
   modalTitle.textContent = item.title;
   modalMeta.textContent = `${item.category} · by ${item.author} · ${item.downloads}`;
-  modalTags.innerHTML = item.tags.map((tag) => `<span>${tag}</span>`).join('');
+  modalTags.innerHTML = (item.tags || []).map((tag) => `<span>${tag}</span>`).join('');
   const downloadName = `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
   modalDownload.href = item.url;
   modalDownload.download = downloadName;
@@ -322,7 +338,7 @@ function closeModal() {
   modalOverlay.classList.remove('active');
   modalOverlay.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
-  modalImage.src = '';
+  modalMediaWrapper.innerHTML = '';
 }
 
 function getSimilarImages(item) {
@@ -540,26 +556,32 @@ renderCollections();
 
 const dbRef = getFirestoreReference();
 if (dbRef) {
-  dbRef.collection('uploadedImages').get().then((snapshot) => {
-    snapshot.docs.forEach((doc) => {
-      const data = doc.data();
-      if (!imageData.some((existing) => existing.url === data.url)) {
-        imageData.unshift({
-          id: imageData.length + 1,
-          title: data.title || 'Uploaded image',
-          category: data.category || 'Uncategorized',
-          author: data.author || 'Unknown',
-          downloads: data.downloads || '0',
-          tags: data.tags || [data.category?.toLowerCase() || 'uploaded'],
-          url: data.url,
-          isUploaded: true
-        });
-        addCategoryIfMissing(data.category || 'Uncategorized');
+  dbRef.collection('uploadedImages')
+    .orderBy('createdAt', 'desc')
+    .onSnapshot((snapshot) => {
+      let updated = false;
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (!imageData.some((existing) => existing.url === data.url)) {
+          imageData.unshift({
+            id: imageData.length + 1,
+            title: data.title || 'Uploaded image',
+            category: data.category || 'Uncategorized',
+            author: data.author || 'Unknown',
+            downloads: data.downloads || '0',
+            tags: data.tags || [data.category?.toLowerCase() || 'uploaded'],
+            url: data.url,
+            isUploaded: true
+          });
+          addCategoryIfMissing(data.category || 'Uncategorized');
+          updated = true;
+        }
+      });
+      if (updated) {
+        renderGrid();
+        renderCollections();
       }
+    }, (error) => {
+      console.error('Firestore realtime load error:', error);
     });
-    renderGrid();
-    renderCollections();
-  }).catch((error) => {
-    console.error('Firestore load error:', error);
-  });
 }

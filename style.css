@@ -110,6 +110,14 @@ nav a.active {
   margin-top: 14px;
 }
 
+.card-media,
+.modal-image-wrapper video {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 20px 20px 0 0;
+}
+
 .card-download {
   width: 100%;
   font-size: 0.95rem;
