@@ -93,6 +93,15 @@ nav a.active {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.admin-button {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.delete-button {
+  background: #ef4444;
+}
+
 .card-download,
 .modal-download {
   margin-top: 14px;

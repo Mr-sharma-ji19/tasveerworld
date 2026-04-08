@@ -53,6 +53,9 @@ const firebaseConfig = {
 };
 
 const localStorageKey = 'tasveerworldUploadedImages';
+const ownerName = 'Ritesh Sharma';
+const adminPassword = 'tasveerworldAdmin';
+let isAdmin = localStorage.getItem('tasveerworldAdmin') === 'true';
 let db = null;
 
 function initFirebase() {
@@ -127,12 +130,15 @@ const modalTitle = document.getElementById('modalTitle');
 const modalMeta = document.getElementById('modalMeta');
 const modalTags = document.getElementById('modalTags');
 const modalDownload = document.getElementById('modalDownload');
+const modalDelete = document.getElementById('modalDelete');
 const similarGrid = document.getElementById('similarGrid');
 const collectionsGrid = document.getElementById('collectionsGrid');
+const adminToggleButton = document.getElementById('adminToggle');
 
 let selectedCategory = 'All';
 let currentSearch = '';
 let itemsToShow = 8;
+let currentModalItem = null;
 
 function createCategoryButtons() {
   categoryFilters.innerHTML = '';
@@ -268,7 +274,34 @@ async function downloadImage(item) {
   }
 }
 
+function canDeleteItem(item) {
+  return item && item.isUploaded && (isAdmin || item.author === ownerName);
+}
+
+function deleteImage(item) {
+  if (!item || !confirm('क्या आप इस image को हटाना चाहते हैं?')) return;
+  const index = imageData.findIndex((entry) => entry.url === item.url);
+  if (index !== -1) {
+    imageData.splice(index, 1);
+    saveUploadsToLocalStorage();
+  }
+
+  const dbRef = getFirestoreReference();
+  if (dbRef) {
+    dbRef.collection('uploadedImages').where('url', '==', item.url).get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => doc.ref.delete().catch((error) => console.error('Firestore delete error:', error)));
+      })
+      .catch((error) => console.error('Firestore delete query error:', error));
+  }
+
+  closeModal();
+  renderGrid();
+  renderCollections();
+}
+
 function openModal(item) {
+  currentModalItem = item;
   modalImage.src = item.url;
   modalImage.alt = item.title;
   modalTitle.textContent = item.title;
@@ -277,6 +310,7 @@ function openModal(item) {
   const downloadName = `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
   modalDownload.href = item.url;
   modalDownload.download = downloadName;
+  modalDelete.style.display = canDeleteItem(item) ? 'inline-flex' : 'none';
   renderSimilarImages(item);
   modalOverlay.classList.add('active');
   modalOverlay.setAttribute('aria-hidden', 'false');
@@ -341,6 +375,37 @@ function updateUploadCategoryInfo() {
     return;
   }
   uploadCategoryInfo.textContent = `Selected category: ${uploadCategoryInput.value}. This helps TasveerWorld show your photo in the right collection.`;
+}
+
+function updateAdminStatusUI() {
+  if (isAdmin) {
+    adminToggleButton.textContent = 'Admin Logout';
+    adminToggleButton.style.background = 'rgba(239, 68, 68, 0.95)';
+  } else {
+    adminToggleButton.textContent = 'Admin Login';
+    adminToggleButton.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+  }
+}
+
+function handleAdminToggle() {
+  if (isAdmin) {
+    isAdmin = false;
+    localStorage.removeItem('tasveerworldAdmin');
+    updateAdminStatusUI();
+    renderGrid();
+    return;
+  }
+
+  const password = prompt('Admin password डालें:');
+  if (password === adminPassword) {
+    isAdmin = true;
+    localStorage.setItem('tasveerworldAdmin', 'true');
+    updateAdminStatusUI();
+    renderGrid();
+    alert('Admin access दिया गया। अब आप delete कर सकते हैं।');
+  } else {
+    alert('गलत password।');
+  }
 }
 
 function addCategoryIfMissing(category) {
@@ -457,12 +522,17 @@ modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', (event) => {
   if (event.target === modalOverlay) closeModal();
 });
+modalDelete.addEventListener('click', () => {
+  if (currentModalItem) deleteImage(currentModalItem);
+});
+adminToggleButton.addEventListener('click', handleAdminToggle);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && modalOverlay.classList.contains('active')) {
     closeModal();
   }
 });
 
+updateAdminStatusUI();
 createCategoryButtons();
 renderGrid();
 renderCollections();
@@ -481,6 +551,7 @@ if (dbRef) {
           downloads: data.downloads || '0',
           tags: data.tags || [data.category?.toLowerCase() || 'uploaded'],
           url: data.url,
+          isUploaded: true
         });
         addCategoryIfMissing(data.category || 'Uncategorized');
       }
