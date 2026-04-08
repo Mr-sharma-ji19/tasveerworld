@@ -43,8 +43,75 @@ const cloudName = 'diwngkoc8';
 const uploadPreset = 'unsigned_upload';
 const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
 
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID'
+};
+
+const localStorageKey = 'tasveerworldUploadedImages';
+let db = null;
+
+function initFirebase() {
+  if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+    console.warn('Firebase SDK not loaded. Firestore will not be available.');
+    return;
+  }
+
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
+    console.warn('Firebase configuration is not set. Replace placeholder values with your Firebase project details.');
+    return;
+  }
+
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    console.log('Firebase initialized successfully.');
+  } catch (error) {
+    if (error.message && error.message.includes('already exists')) {
+      db = firebase.firestore();
+    } else {
+      console.error('Firebase initialization error:', error);
+    }
+  }
+}
+
+initFirebase();
+loadLocalUploads();
+
+function saveUploadsToLocalStorage() {
+  try {
+    const uploadedItems = imageData.filter((item) => item.isUploaded);
+    localStorage.setItem(localStorageKey, JSON.stringify(uploadedItems));
+  } catch (error) {
+    console.warn('Unable to save uploads to localStorage:', error);
+  }
+}
+
+function loadLocalUploads() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+    if (!Array.isArray(saved)) return;
+    saved.reverse().forEach((data) => {
+      if (data && data.url && !imageData.some((item) => item.url === data.url)) {
+        imageData.unshift({
+          ...data,
+          id: imageData.length + 1,
+          isUploaded: true
+        });
+        addCategoryIfMissing(data.category || 'Uncategorized');
+      }
+    });
+  } catch (error) {
+    console.warn('Unable to load uploads from localStorage:', error);
+  }
+}
+
 function getFirestoreReference() {
-  if (typeof db !== 'undefined') {
+  if (db) {
     return db;
   }
   if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -327,6 +394,7 @@ function handleUpload() {
         downloads: '0',
         tags: tags.length ? tags : [category.toLowerCase()],
         url: uploadedUrl,
+        isUploaded: true
       };
 
       const dbRef = getFirestoreReference();
@@ -345,6 +413,7 @@ function handleUpload() {
       }
 
       imageData.unshift(newItem);
+      saveUploadsToLocalStorage();
       addCategoryIfMissing(category);
       uploadFileInput.value = '';
       uploadTitleInput.value = '';
