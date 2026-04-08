@@ -44,12 +44,13 @@ const uploadPreset = 'unsigned_upload';
 const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
 
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_STORAGE_BUCKET',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID'
+  apiKey: 'AIzaSyC4U3udTgHcD3JYpbzLS4q4FWLzwGJuxpc',
+  authDomain: 'tasweerworld.firebaseapp.com',
+  projectId: 'tasweerworld',
+  storageBucket: 'tasweerworld.firebasestorage.app',
+  messagingSenderId: '1066852345128',
+  appId: '1:1066852345128:web:17bcb097bfcdec90169c1d',
+  measurementId: 'G-N9SE1W9TTX'
 };
 
 const localStorageKey = 'tasveerworldUploadedImages';
