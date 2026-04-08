@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TasveerWorld</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>T</span>
+      <div>
+        <div>TasveerWorld</div>
+        <div style="font-size:0.8rem; color: var(--muted);">Images & assets</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#" class="active">Discover</a>
+      <a href="#images">Images</a>
+      <a href="#collections">Collections</a>
+      <a href="#about">About</a>
+      <a href="#upload" class="button">Upload</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-copy">
+        <p style="color: #60a5fa; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 16px;">Stock images for every project</p>
+        <h1>Beautiful photos, illustrations, and vector assets for free.</h1>
+        <p>Search from thousands of high-quality images and illustrations for your designs, presentations, website, or social media.</p>
+
+        <div class="search-card">
+          <label for="searchInput">Search images</label>
+          <div class="search-wrapper">
+            <input id="searchInput" type="search" placeholder="Search high-resolution photos, vectors, illustrations…" aria-label="Search images" />
+            <button id="searchButton">Search</button>
+          </div>
+          <div class="tagline">
+            <span data-tag="Nature">Nature</span>
+            <span data-tag="Technology">Technology</span>
+            <span data-tag="Business">Business</span>
+            <span data-tag="Travel">Travel</span>
+          </div>
+        </div>
+
+        <div class="hero-grid">
+          <div class="stat-card">
+            <strong>18K+</strong>
+            <span>High quality images</span>
+          </div>
+          <div class="stat-card">
+            <strong>7K+</strong>
+            <span>Premium vectors</span>
+          </div>
+          <div class="stat-card">
+            <strong>4.5M</strong>
+            <span>Monthly downloads</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="card-large" style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80');">
+          <div class="card-overlay">
+            <div class="meta">
+              <span>Nature</span>
+              <span>Free</span>
+            </div>
+            <h3 style="margin:0;">Sunrise over the lake</h3>
+          </div>
+        </div>
+        <div class="card-small" style="background-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80');">
+          <div class="card-overlay">
+            <div class="meta"><span>Travel</span></div>
+            <h3 style="margin:0; font-size:1.05rem;">City evening lights</h3>
+          </div>
+        </div>
+        <div class="card-small" style="background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80');">
+          <div class="card-overlay">
+            <div class="meta"><span>Creative</span></div>
+            <h3 style="margin:0; font-size:1.05rem;">Abstract gradients</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="upload" class="upload-section">
+      <div class="section-heading">
+        <div>
+          <h2>Upload your picture</h2>
+          <p style="margin: 8px 0 0; color: var(--muted);">Upload image file and select category like Travel, Nature, Modern, Business.</p>
+        </div>
+      </div>
+      <div class="upload-grid">
+        <label for="uploadFile">Choose image file</label>
+        <input id="uploadFile" type="file" accept="image/*" />
+
+        <label for="uploadTitle">Image title</label>
+        <input id="uploadTitle" type="text" placeholder="Example: Modern city view" />
+
+        <label for="uploadAuthor">Author name</label>
+        <input id="uploadAuthor" type="text" placeholder="Your name" />
+
+        <label for="uploadCategory">Category</label>
+        <select id="uploadCategory">
+          <option value="Travel">Travel</option>
+          <option value="Nature">Nature</option>
+          <option value="Modern">Modern</option>
+          <option value="Business">Business</option>
+          <option value="Technology">Technology</option>
+          <option value="Creative">Creative</option>
+          <option value="People">People</option>
+          <option value="Fashion">Fashion</option>
+          <option value="Lifestyle">Lifestyle</option>
+          <option value="Food">Food</option>
+        </select>
+        <p id="uploadCategoryInfo" class="upload-category-info">Selected category will help TasveerWorld organize your upload.</p>
+
+        <label for="uploadTags">Tags</label>
+        <input id="uploadTags" type="text" placeholder="Example: travel, nature, modern" />
+
+        <button id="uploadSubmit" class="button" type="button">Upload image</button>
+        <p id="uploadStatus" class="upload-status"></p>
+      </div>
+    </section>
+
+    <section id="images">
+      <div class="section-heading">
+        <div>
+          <h2>Trending image assets</h2>
+          <p style="margin: 8px 0 0; color: var(--muted);">Filter by category or search to find the perfect visual.</p>
+        </div>
+      </div>
+
+      <div class="filter-row" id="categoryFilters"></div>
+      <div class="grid" id="imageGrid"></div>
+      <button class="load-more" id="loadMoreBtn">Load more images</button>
+    </section>
+
+    <section id="collections">
+      <div class="section-heading">
+        <div>
+          <h2>Collections</h2>
+          <p style="margin: 8px 0 0; color: var(--muted);">Explore curated collections of images by category.</p>
+        </div>
+      </div>
+      <div class="collections-grid" id="collectionsGrid"></div>
+    </section>
+
+    <section id="about">
+      <div class="section-heading">
+        <div>
+          <h2>About TasveerWorld</h2>
+          <p style="margin: 8px 0 0; color: var(--muted);">Our goal is to make high-quality, beautiful, and free images easily accessible for everyone.</p>
+        </div>
+      </div>
+      <div class="about-content">
+        <p>TasveerWorld is a platform where you can explore premium-quality photos, vectors, and illustrations that help make your projects look more professional and visually appealing.</p>
+        <p>This website is built using HTML, CSS, and JavaScript, allowing users to access and use it without any complex setup.</p>
+        <ul>
+          <li>Fast search and advanced filtering</li>
+          <li>Mobile-friendly and responsive design</li>
+          <li>Clean UI with a smooth visual experience</li>
+        </ul>
+        <p>—</p>
+        <p>This website is created by Ritesh Sharma, an aspiring Software Developer with a passion for web development and creative projects.</p>
+        <p>I enjoy building modern and user-friendly applications that solve real problems and provide a great user experience.</p>
+        <p>— Created with passion by Ritesh Sharma</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="imageModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close preview">×</button>
+      <div class="modal-image-wrapper">
+        <img id="modalImage" src="" alt="Preview image" />
+      </div>
+      <div class="modal-details">
+        <div>
+          <h3 id="modalTitle">Image title</h3>
+          <p id="modalMeta">Category · by author · downloads</p>
+        </div>
+        <div class="modal-tags" id="modalTags"></div>
+        <div class="modal-actions">
+          <a id="modalDownload" class="button modal-download" href="#" target="_blank" rel="noreferrer noopener" download>Download</a>
+        </div>
+        <div>
+          <h4 style="margin:0 0 12px;">Similar images</h4>
+          <div class="similar-grid" id="similarGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Built with HTML, CSS, and JavaScript. This page mimics a Freepik-style image discovery layout.
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
