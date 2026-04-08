@@ -114,7 +114,7 @@ function getFirestoreReference() {
   if (db) {
     return db;
   }
-  if (typeof firebase !== 'undefined' && firebase.firestore) {
+  if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
     return firebase.firestore();
   }
   return null;
