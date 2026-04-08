@@ -1,3 +1,5 @@
+// Default sample images used to populate the gallery on first load.
+// Uploaded images will be added to this list dynamically.
 const imageData = [
   { id: 1, title: 'Forest waterfall', category: 'Nature', author: 'S. Mehta', downloads: '12.4K', tags: ['nature', 'green', 'waterfall'], url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80' },
   { id: 2, title: 'Iconic fashion board', category: 'Fashion', author: 'A. Kapoor', downloads: '11.2K', tags: ['fashion', 'pinterest', 'style'], url: 'https://images.unsplash.com/photo-1495121605193-b116b5b9cbe0?auto=format&fit=crop&w=800&q=80' },
@@ -39,6 +41,9 @@ const uploadTagsInput = document.getElementById('uploadTags');
 const uploadSubmit = document.getElementById('uploadSubmit');
 const uploadStatus = document.getElementById('uploadStatus');
 const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+// Cloudinary upload configuration for image storage.
+// We send uploads to this URL using the specified unsigned preset.
 const cloudName = 'diwngkoc8';
 const uploadPreset = 'unsigned_upload';
 const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
@@ -59,6 +64,8 @@ const adminPassword = 'tasveerworldAdmin';
 let isAdmin = localStorage.getItem('tasveerworldAdmin') === 'true';
 let db = null;
 
+// Initialize Firebase and Firestore connection.
+// This is required only if Firebase SDK is loaded and properly configured.
 function initFirebase() {
   if (typeof firebase === 'undefined' || !firebase.initializeApp) {
     console.warn('Firebase SDK not loaded. Firestore will not be available.');
@@ -86,6 +93,8 @@ function initFirebase() {
 initFirebase();
 loadLocalUploads();
 
+// Save uploaded images to browser localStorage as a fallback.
+// This helps show uploads on the same device even without Firestore.
 function saveUploadsToLocalStorage() {
   try {
     const uploadedItems = imageData.filter((item) => item.isUploaded);
@@ -114,6 +123,7 @@ function loadLocalUploads() {
   }
 }
 
+// Return the Firestore database object if Firebase is initialized.
 function getFirestoreReference() {
   if (db) {
     return db;
@@ -178,6 +188,7 @@ function filterImages() {
   });
 }
 
+// Render the main image grid based on filters and current search.
 function renderGrid() {
   const filtered = filterImages();
   gridElement.innerHTML = '';
@@ -205,10 +216,12 @@ function getCollections() {
   return Object.entries(collections).map(([name, data]) => ({ name, ...data }));
 }
 
+// Decide whether the media is a video or an image.
 function isVideoUrl(url) {
   return typeof url === 'string' && /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url);
 }
 
+// Return HTML for either a video or an image card.
 function getMediaHtml(item) {
   if (isVideoUrl(item.url)) {
     return `
@@ -267,6 +280,7 @@ function renderCard(item) {
   gridElement.appendChild(card);
 }
 
+// Download the selected image/video by creating a temporary link.
 async function downloadImage(item) {
   const fileName = `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
   try {
@@ -296,6 +310,7 @@ function canDeleteItem(item) {
   return item && item.isUploaded && (isAdmin || item.author === ownerName);
 }
 
+// Delete an uploaded image from the local list and Firestore.
 function deleteImage(item) {
   if (!item || !confirm('क्या आप इस image को हटाना चाहते हैं?')) return;
   const index = imageData.findIndex((entry) => entry.url === item.url);
@@ -318,6 +333,7 @@ function deleteImage(item) {
   renderCollections();
 }
 
+// Open the preview modal for a selected item.
 function openModal(item) {
   currentModalItem = item;
   modalMediaWrapper.innerHTML = getMediaHtml(item);
@@ -373,6 +389,7 @@ function renderSimilarImages(item) {
   });
 }
 
+// Apply the search query and refresh the image grid.
 function applySearch() {
   currentSearch = searchInput.value;
   itemsToShow = 8;
@@ -432,6 +449,7 @@ function addCategoryIfMissing(category) {
   }
 }
 
+// Handle the upload form: send the selected image to Cloudinary, then save metadata to Firestore.
 function handleUpload() {
   const file = uploadFileInput.files[0];
   const title = uploadTitleInput.value.trim();
@@ -513,6 +531,7 @@ function handleUpload() {
     });
 }
 
+// User actions: upload image, search images, and use Enter key for search.
 uploadSubmit.addEventListener('click', handleUpload);
 
 searchButton.addEventListener('click', applySearch);
@@ -535,6 +554,7 @@ loadMoreBtn.addEventListener('click', () => {
   renderGrid();
 });
 
+// Modal and admin controls: close modal, delete image, and toggle admin mode.
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', (event) => {
   if (event.target === modalOverlay) closeModal();
@@ -554,6 +574,8 @@ createCategoryButtons();
 renderGrid();
 renderCollections();
 
+// Listen in real time for uploaded images from Firestore.
+// This keeps the gallery synced across devices when new uploads appear.
 const dbRef = getFirestoreReference();
 if (dbRef) {
   dbRef.collection('uploadedImages')
