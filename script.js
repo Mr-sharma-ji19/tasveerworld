@@ -607,3 +607,12 @@ if (dbRef) {
       console.error('Firestore realtime load error:', error);
     });
 }
+// MOBILE NAV TOGGLE
+const menuToggle = document.getElementById("menuToggle");
+const nav = document.querySelector("nav");
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", () => {
+    nav.classList.toggle("active");
+  });
+}

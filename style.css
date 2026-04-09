@@ -706,3 +706,80 @@ footer {
     column-count: 1;
   }
 }
+/* ================= FINAL RESPONSIVE FIX ================= */
+
+/* MOBILE NAV */
+@media (max-width: 768px) {
+
+  #menuToggle {
+    display: block !important;
+    margin-top: 10px;
+  }
+
+  nav {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.95);
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  nav.active {
+    display: flex;
+  }
+
+  header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+
+/* HERO FIX */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .hero-visual {
+    grid-template-columns: 1fr;
+  }
+
+  .card-large {
+    min-height: 300px;
+  }
+}
+
+/* GRID FIX */
+@media (max-width: 768px) {
+  .grid {
+    column-count: 1;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid {
+    column-count: 2;
+  }
+}
+
+/* GENERAL MOBILE */
+@media (max-width: 600px) {
+  .container {
+    padding: 0 16px 40px;
+  }
+
+  h1 {
+    font-size: 2.2rem !important;
+  }
+
+  .search-wrapper {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
