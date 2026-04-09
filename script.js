@@ -622,3 +622,34 @@ document.querySelectorAll("nav a").forEach(link => {
     nav.classList.remove("active");
   });
 });
+
+// ===== MOBILE NAV HIDE ON SCROLL =====
+let lastScroll = 0;
+const header = document.querySelector("header");
+const navArrow = document.getElementById("navArrow");
+
+window.addEventListener("scroll", () => {
+  if (window.innerWidth > 768) return; // desktop ignore
+
+  let currentScroll = window.pageYOffset;
+
+  if (currentScroll > lastScroll && currentScroll > 50) {
+    // scroll down
+    header.classList.add("hide");
+    navArrow.classList.add("show");
+  } else {
+    // scroll up
+    header.classList.remove("hide");
+    navArrow.classList.remove("show");
+  }
+
+  lastScroll = currentScroll;
+});
+
+// arrow click → show navbar
+if (navArrow) {
+  navArrow.addEventListener("click", () => {
+    header.classList.remove("hide");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
