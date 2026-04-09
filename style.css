@@ -814,3 +814,60 @@ footer {
     width: 100%;
   }
 }
+
+/* ===== MOBILE IMAGE FIX (NO CROP) ===== */
+@media (max-width: 768px) {
+
+  .modal-image-wrapper {
+    height: auto;
+    max-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-image-wrapper img {
+    width: 100%;
+    height: auto;
+    object-fit: contain; /* 🔥 main fix */
+    border-radius: 12px;
+  }
+}
+
+
+
+
+/* ===== MOBILE NAVBAR IMPROVEMENT ===== */
+@media (max-width: 768px) {
+
+  header {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .brand {
+    flex: 1;
+  }
+
+  #menuToggle {
+    display: block !important;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+
+  .admin-button {
+    width: auto;
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  /* dono ek line me */
+  #menuToggle,
+  .admin-button {
+    margin-left: 8px;
+  }
+}
