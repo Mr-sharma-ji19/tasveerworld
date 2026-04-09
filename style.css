@@ -706,14 +706,23 @@ footer {
     column-count: 1;
   }
 }
-/* ================= FINAL RESPONSIVE FIX ================= */
+/* ================= CLEAN RESPONSIVE ================= */
 
-/* MOBILE NAV */
+/* MOBILE HEADER */
 @media (max-width: 768px) {
+
+  header {
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    flex: 1;
+  }
 
   #menuToggle {
     display: block !important;
-    margin-top: 10px;
   }
 
   nav {
@@ -721,6 +730,7 @@ footer {
     display: none;
     flex-direction: column;
     gap: 12px;
+    margin-top: 12px;
     background: rgba(15, 23, 42, 0.95);
     padding: 16px;
     border-radius: 12px;
@@ -730,17 +740,17 @@ footer {
     display: flex;
   }
 
-  header {
-    flex-wrap: wrap;
-    align-items: flex-start;
+  .admin-button {
+    width: 100%;
+    margin-top: 10px;
   }
 }
 
 /* HERO FIX */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .hero {
     grid-template-columns: 1fr;
-    gap: 20px;
+    padding: 20px 0;
   }
 
   .hero-visual {
@@ -748,7 +758,7 @@ footer {
   }
 
   .card-large {
-    min-height: 300px;
+    min-height: 280px;
   }
 }
 
@@ -759,9 +769,30 @@ footer {
   }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  .grid {
-    column-count: 2;
+/* MODAL FIX */
+@media (max-width: 768px) {
+
+  .modal-card {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .modal-image-wrapper {
+    height: 250px;
+  }
+
+  .modal-image-wrapper img {
+    object-fit: cover;
+  }
+
+  .modal-details {
+    padding: 16px;
+  }
+
+  .similar-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

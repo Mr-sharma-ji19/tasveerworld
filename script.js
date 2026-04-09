@@ -616,3 +616,9 @@ if (menuToggle) {
     nav.classList.toggle("active");
   });
 }
+// NAV CLOSE ON CLICK (NEW 🔥)
+document.querySelectorAll("nav a").forEach(link => {
+  link.addEventListener("click", () => {
+    nav.classList.remove("active");
+  });
+});
