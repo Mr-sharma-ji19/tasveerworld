@@ -871,3 +871,53 @@ footer {
     margin-left: 8px;
   }
 }
+
+/* ===== NAVBAR ONE LINE FIX ===== */
+@media (max-width: 768px) {
+
+  header {
+    display: flex;
+    flex-wrap: nowrap; /* ❌ wrap hata diya */
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    flex: 1;
+    min-width: 0;
+  }
+
+  #menuToggle {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    padding: 0;
+  }
+
+  .admin-button {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 13px;
+    margin-left: 6px;
+  }
+}
+
+/* ===== MODAL TEXT FIX ===== */
+@media (max-width: 768px) {
+
+  .modal-card {
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh;
+    overflow-y: auto; /* 🔥 scroll enable */
+  }
+
+  .modal-image-wrapper {
+    max-height: 50vh;
+  }
+
+  .modal-details {
+    padding: 16px;
+    overflow: visible; /* 🔥 text visible */
+  }
+}
