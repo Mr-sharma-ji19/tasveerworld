@@ -952,3 +952,14 @@ footer {
   font-size: 20px;
   cursor: pointer;
 }
+
+/* ⭐ RATING STYLE */
+.rating-stars {
+  margin-top: 10px;
+}
+
+.rating-stars span {
+  font-size: 22px;
+  cursor: pointer;
+  margin-right: 5px;
+}

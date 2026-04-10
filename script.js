@@ -337,12 +337,31 @@ function deleteImage(item) {
 function openModal(item) {
   currentModalItem = item;
 
-  // views increase
-item.views = (item.views || 0) + 1;
+  const dbRef = getFirestoreReference();
+
+if (dbRef && item.url) {
+  dbRef.collection("uploadedImages")
+    .where("url", "==", item.url)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        let currentViews = doc.data().views || 0;
+
+        doc.ref.update({
+          views: currentViews + 1
+        });
+      });
+    });
+}
+
+
 
   modalMediaWrapper.innerHTML = getMediaHtml(item);
   modalTitle.textContent = item.title;
-  modalMeta.textContent = `${item.category} · by ${item.author} · ${item.downloads}`;
+ modalMeta.textContent = `
+${item.category} · by ${item.author} · 
+${item.views || 0} views · ⭐ ${item.rating ? item.rating.toFixed(1) : "0"}
+`;
   modalTags.innerHTML = (item.tags || []).map((tag) => `<span>${tag}</span>`).join('');
   const downloadName = `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
   modalDownload.href = item.url;
@@ -674,4 +693,32 @@ document.addEventListener("click", (e) => {
 db.collection("uploadedImages").doc(item.id).update({
   views: item.views,
   rating: item.rating
+});
+
+document.addEventListener("click", async (e) => {
+  if (e.target.matches(".rating-stars span")) {
+    const value = parseInt(e.target.dataset.value);
+    const dbRef = getFirestoreReference();
+
+    if (!dbRef || !currentModalItem) return;
+
+    const snapshot = await dbRef.collection("uploadedImages")
+      .where("url", "==", currentModalItem.url)
+      .get();
+
+    snapshot.forEach(doc => {
+      let data = doc.data();
+      let totalRating = (data.rating || 0) * (data.ratingCount || 0);
+
+      let newCount = (data.ratingCount || 0) + 1;
+      let newRating = (totalRating + value) / newCount;
+
+      doc.ref.update({
+        rating: newRating,
+        ratingCount: newCount
+      });
+    });
+
+    alert("⭐ Rating submitted!");
+  }
 });
