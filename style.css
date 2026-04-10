@@ -946,3 +946,9 @@ footer {
     padding-top: 80px;
   }
 }
+
+.rating {
+  margin-top: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}

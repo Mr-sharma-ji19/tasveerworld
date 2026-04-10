@@ -336,6 +336,10 @@ function deleteImage(item) {
 // Open the preview modal for a selected item.
 function openModal(item) {
   currentModalItem = item;
+
+  // views increase
+item.views = (item.views || 0) + 1;
+
   modalMediaWrapper.innerHTML = getMediaHtml(item);
   modalTitle.textContent = item.title;
   modalMeta.textContent = `${item.category} · by ${item.author} · ${item.downloads}`;
@@ -653,3 +657,21 @@ if (navArrow) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
+
+// rating click
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".rating")) {
+    const stars = e.target.closest(".rating");
+    const value = prompt("Rate this image (1-5):");
+
+    if (value >= 1 && value <= 5) {
+      currentModalItem.rating = value;
+      alert("Rating saved ⭐ " + value);
+    }
+  }
+});
+
+db.collection("uploadedImages").doc(item.id).update({
+  views: item.views,
+  rating: item.rating
+});
