@@ -336,32 +336,9 @@ function deleteImage(item) {
 // Open the preview modal for a selected item.
 function openModal(item) {
   currentModalItem = item;
-
-  const dbRef = getFirestoreReference();
-
-if (dbRef && item.url) {
-  dbRef.collection("uploadedImages")
-    .where("url", "==", item.url)
-    .get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        let currentViews = doc.data().views || 0;
-
-        doc.ref.update({
-          views: currentViews + 1
-        });
-      });
-    });
-}
-
-
-
   modalMediaWrapper.innerHTML = getMediaHtml(item);
   modalTitle.textContent = item.title;
- modalMeta.textContent = `
-${item.category} · by ${item.author} · 
-${item.views || 0} views · ⭐ ${item.rating ? item.rating.toFixed(1) : "0"}
-`;
+  modalMeta.textContent = `${item.category} · by ${item.author} · ${item.downloads}`;
   modalTags.innerHTML = (item.tags || []).map((tag) => `<span>${tag}</span>`).join('');
   const downloadName = `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
   modalDownload.href = item.url;
@@ -676,49 +653,3 @@ if (navArrow) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
-
-// rating click
-document.addEventListener("click", (e) => {
-  if (e.target.closest(".rating")) {
-    const stars = e.target.closest(".rating");
-    const value = prompt("Rate this image (1-5):");
-
-    if (value >= 1 && value <= 5) {
-      currentModalItem.rating = value;
-      alert("Rating saved ⭐ " + value);
-    }
-  }
-});
-
-db.collection("uploadedImages").doc(item.id).update({
-  views: item.views,
-  rating: item.rating
-});
-
-document.addEventListener("click", async (e) => {
-  if (e.target.matches(".rating-stars span")) {
-    const value = parseInt(e.target.dataset.value);
-    const dbRef = getFirestoreReference();
-
-    if (!dbRef || !currentModalItem) return;
-
-    const snapshot = await dbRef.collection("uploadedImages")
-      .where("url", "==", currentModalItem.url)
-      .get();
-
-    snapshot.forEach(doc => {
-      let data = doc.data();
-      let totalRating = (data.rating || 0) * (data.ratingCount || 0);
-
-      let newCount = (data.ratingCount || 0) + 1;
-      let newRating = (totalRating + value) / newCount;
-
-      doc.ref.update({
-        rating: newRating,
-        ratingCount: newCount
-      });
-    });
-
-    alert("⭐ Rating submitted!");
-  }
-});
