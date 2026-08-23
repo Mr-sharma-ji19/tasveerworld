@@ -1,8 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TasveerWorld — free high-quality photos, illustrations, and videos for every project." />
+  <meta name="theme-color" content="#0f172a" />
   <title>TasveerWorld</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -27,7 +29,10 @@
     <a href="#upload" class="button">Upload</a>
   </nav>
 
-  <button id="adminToggle" class="button admin-button">Admin Login</button>
+  <div class="header-actions">
+    <button id="themeToggle" class="button admin-button" type="button" aria-label="Toggle light/dark theme">🌙</button>
+    <button id="adminToggle" class="button admin-button">Admin Login</button>
+  </div>
 </header>
 
   <main class="container">
@@ -50,21 +55,6 @@
             <span data-tag="Travel">Travel</span>
           </div>
         </div>
-
-        <!-- <div class="hero-grid">
-          <div class="stat-card">
-            <strong>18K+</strong>
-            <span>High quality images</span>
-          </div>
-          <div class="stat-card">
-            <strong>7K+</strong>
-            <span>Premium vectors</span>
-          </div>
-          <div class="stat-card">
-            <strong>4.5M</strong>
-            <span>Monthly downloads</span>
-          </div>
-        </div> -->
       </div>
 
       <div class="hero-visual">
@@ -95,13 +85,27 @@
     <section id="upload" class="upload-section">
       <div class="section-heading">
         <div>
-          <h2>Upload your picture</h2>
-          <p style="margin: 8px 0 0; color: var(--muted);">Upload image file and select category like Travel, Nature, Modern, Business.</p>
+          <h2>Upload your picture or video</h2>
+          <p style="margin: 8px 0 0; color: var(--muted);">Drag & drop, or choose a file, and select a category like Travel, Nature, Modern, Business.</p>
         </div>
       </div>
       <div class="upload-grid">
-        <label for="uploadFile">Choose image file</label>
-        <input id="uploadFile" type="file" accept="image/*" />
+        <label for="uploadFile">Choose image or video file</label>
+        <div id="dropzone" class="dropzone">
+          <input id="uploadFile" type="file" accept="image/*,video/*" />
+          <div class="dropzone-content">
+            <span class="dropzone-icon">⬆️</span>
+            <span id="dropzoneLabel">Drag & drop a file here, or click to browse</span>
+            <span class="dropzone-hint">Photos: JPG, PNG, WEBP · Videos: MP4, WEBM, MOV — max 100MB</span>
+          </div>
+        </div>
+
+        <div id="progressWrap" class="progress-wrap" hidden>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <span id="progressLabel" class="progress-label">0%</span>
+        </div>
 
         <label for="uploadTitle">Image title</label>
         <input id="uploadTitle" type="text" placeholder="Example: Modern city view" />
@@ -127,7 +131,7 @@
         <label for="uploadTags">Tags</label>
         <input id="uploadTags" type="text" placeholder="Example: travel, nature, modern" />
 
-        <button id="uploadSubmit" class="button" type="button">Upload image</button>
+        <button id="uploadSubmit" class="button" type="button">Upload</button>
         <p id="uploadStatus" class="upload-status"></p>
       </div>
     </section>
@@ -201,6 +205,8 @@
       </div>
     </div>
   </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <footer>
     Built with HTML, CSS, and JavaScript. This page mimics a Freepik-style image discovery layout.
