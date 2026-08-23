@@ -412,6 +412,10 @@ function openModal(item) {
   modalOverlay.classList.add('active');
   modalOverlay.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  // Always start the modal scrolled to the top so the image is visible first,
+  // instead of wherever a previous modal's scroll position was left.
+  const modalCardEl = modalOverlay.querySelector('.modal-card');
+  if (modalCardEl) modalCardEl.scrollTop = 0;
 }
 
 function closeModal() {
@@ -488,7 +492,7 @@ function updateAdminStatusUI() {
     adminToggleButton.style.background = 'rgba(239, 68, 68, 0.95)';
   } else {
     adminToggleButton.textContent = 'Admin Login';
-    adminToggleButton.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+    adminToggleButton.style.background = 'linear-gradient(135deg, #5b8cff, #3f6dfa)';
   }
 }
 
@@ -819,7 +823,11 @@ const header = document.querySelector("header");
 const navArrow = document.getElementById("navArrow");
 
 window.addEventListener("scroll", () => {
-  if (window.innerWidth > 768) return; // desktop ignore
+  // Give the header a subtle border/shadow once the page has scrolled,
+  // on both desktop and mobile.
+  header.classList.toggle("scrolled", window.pageYOffset > 4);
+
+  if (window.innerWidth > 768) return; // desktop ignore the hide/show behaviour below
 
   let currentScroll = window.pageYOffset;
 
