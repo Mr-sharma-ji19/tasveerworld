@@ -41,12 +41,24 @@ const uploadTagsInput = document.getElementById('uploadTags');
 const uploadSubmit = document.getElementById('uploadSubmit');
 const uploadStatus = document.getElementById('uploadStatus');
 const loadMoreBtn = document.getElementById('loadMoreBtn');
+const dropzone = document.getElementById('dropzone');
+const dropzoneLabel = document.getElementById('dropzoneLabel');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progressBar');
+const progressLabel = document.getElementById('progressLabel');
+const toastContainer = document.getElementById('toastContainer');
+const themeToggleButton = document.getElementById('themeToggle');
 
-// Cloudinary upload configuration for image storage.
-// We send uploads to this URL using the specified unsigned preset.
+// Cloudinary upload configuration for image AND video storage.
+// 'auto' resource type lets Cloudinary detect image vs video automatically,
+// so the same endpoint works for both file types.
 const cloudName = 'diwngkoc8';
 const uploadPreset = 'unsigned_upload';
-const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+// Max file size we allow client-side before even trying to upload (in MB).
+// Unsigned presets on Cloudinary's free tier typically cap around 100MB for video.
+const maxUploadSizeMB = 100;
 
 const firebaseConfig = {
   apiKey: 'AIzaSyC4U3udTgHcD3JYpbzLS4q4FWLzwGJuxpc',
@@ -59,11 +71,57 @@ const firebaseConfig = {
 };
 
 const localStorageKey = 'tasveerworldUploadedImages';
+const themeStorageKey = 'tasveerworldTheme';
 const ownerName = 'Ritesh Sharma';
 const adminPassword = 'tasveerworldAdmin';
 let isAdmin = localStorage.getItem('tasveerworldAdmin') === 'true';
 let db = null;
-let firebaseReady = false; // NEW: tracks whether Firestore actually initialized
+let firebaseReady = false; // tracks whether Firestore actually initialized
+
+// ===== THEME TOGGLE =====
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if (themeToggleButton) {
+    themeToggleButton.textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+  localStorage.setItem(themeStorageKey, theme);
+}
+
+(function initTheme() {
+  const savedTheme = localStorage.getItem(themeStorageKey) || 'dark';
+  applyTheme(savedTheme);
+})();
+
+if (themeToggleButton) {
+  themeToggleButton.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+}
+
+// ===== TOAST NOTIFICATIONS =====
+function showToast(message, type = 'info') {
+  if (!toastContainer) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4500);
+}
+
+// ===== SCROLL-REVEAL ANIMATION =====
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in-view');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.08 });
 
 // Initialize Firebase and Firestore connection.
 // This is required only if Firebase SDK is loaded and properly configured.
@@ -257,6 +315,7 @@ function renderCollections() {
       document.getElementById('images').scrollIntoView({ behavior: 'smooth' });
     });
     collectionsGrid.appendChild(card);
+    revealObserver.observe(card);
   });
 }
 
@@ -281,6 +340,7 @@ function renderCard(item) {
     downloadImage(item);
   });
   gridElement.appendChild(card);
+  revealObserver.observe(card);
 }
 
 // Download the selected image/video by creating a temporary link.
@@ -334,6 +394,7 @@ function deleteImage(item) {
   closeModal();
   renderGrid();
   renderCollections();
+  showToast('Image deleted.', 'info');
 }
 
 // Open the preview modal for a selected item.
@@ -399,6 +460,13 @@ function applySearch() {
   renderGrid();
 }
 
+// Debounced live search: fires ~300ms after the user stops typing.
+let searchDebounceTimer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(applySearch, 300);
+});
+
 function parseTags(tagsString) {
   return tagsString
     .split(',')
@@ -439,9 +507,9 @@ function handleAdminToggle() {
     localStorage.setItem('tasveerworldAdmin', 'true');
     updateAdminStatusUI();
     renderGrid();
-    alert('Admin access दिया गया। अब आप delete कर सकते हैं।');
+    showToast('Admin access diya gaya. Ab aap delete kar sakte hain.', 'success');
   } else {
-    alert('गलत password।');
+    showToast('Galat password.', 'error');
   }
 }
 
@@ -452,8 +520,92 @@ function addCategoryIfMissing(category) {
   }
 }
 
-// Handle the upload form: send the selected image to Cloudinary, then save metadata to Firestore.
-function handleUpload() {
+// ===== DRAG & DROP =====
+if (dropzone) {
+  ['dragenter', 'dragover'].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) {
+      uploadFileInput.files = e.dataTransfer.files;
+      updateDropzoneLabel(file);
+    }
+  });
+
+  uploadFileInput.addEventListener('change', () => {
+    if (uploadFileInput.files[0]) updateDropzoneLabel(uploadFileInput.files[0]);
+  });
+}
+
+function updateDropzoneLabel(file) {
+  if (dropzoneLabel) {
+    dropzoneLabel.textContent = `Selected: ${file.name}`;
+  }
+}
+
+function resetDropzoneLabel() {
+  if (dropzoneLabel) {
+    dropzoneLabel.textContent = 'Drag & drop a file here, or click to browse';
+  }
+}
+
+// ===== CLOUDINARY UPLOAD WITH PROGRESS (via XHR) =====
+function uploadToCloudinary(formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', cloudinaryUploadUrl);
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    });
+    xhr.onload = () => {
+      let body;
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch (parseError) {
+        reject(new Error('Unexpected response from Cloudinary.'));
+        return;
+      }
+      if (xhr.status === 200 || xhr.status === 201) {
+        resolve(body);
+      } else {
+        reject(new Error((body.error && body.error.message) || 'Cloudinary upload failed.'));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload.'));
+    xhr.send(formData);
+  });
+}
+
+function setProgress(percent) {
+  if (!progressWrap || !progressBar || !progressLabel) return;
+  progressWrap.hidden = false;
+  progressBar.style.width = `${percent}%`;
+  progressLabel.textContent = `${percent}%`;
+}
+
+function hideProgress() {
+  if (!progressWrap) return;
+  progressWrap.hidden = true;
+  progressBar.style.width = '0%';
+  progressLabel.textContent = '0%';
+}
+
+// Handle the upload form: send the selected image/video to Cloudinary, then save metadata to Firestore.
+async function handleUpload() {
   const file = uploadFileInput.files[0];
   const title = uploadTitleInput.value.trim();
   const author = uploadAuthorInput.value.trim() || 'You';
@@ -469,65 +621,71 @@ function handleUpload() {
     return;
   }
 
-  uploadStatus.textContent = 'Uploading image to Cloudinary...';
-  uploadSubmit.disabled = true; // prevent double-submits while in flight
+  const fileSizeMB = file.size / (1024 * 1024);
+  if (fileSizeMB > maxUploadSizeMB) {
+    uploadStatus.textContent = `File bahut badi hai (${fileSizeMB.toFixed(1)}MB). Max allowed: ${maxUploadSizeMB}MB.`;
+    showToast('File size limit se zyada hai.', 'error');
+    return;
+  }
+
+  const isVideoFile = file.type.startsWith('video/');
+  const mediaLabel = isVideoFile ? 'Video' : 'Image';
+  uploadStatus.textContent = `Uploading ${mediaLabel.toLowerCase()} to Cloudinary...`;
+  uploadSubmit.disabled = true;
+  setProgress(0);
 
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', uploadPreset);
 
-  fetch(cloudinaryUploadUrl, {
-    method: 'POST',
-    body: formData,
-  })
-    .then((response) => response.json().then((result) => ({ status: response.status, body: result })))
-    .then(({ status, body }) => {
-      if (status !== 200 && status !== 201) {
-        throw new Error(body.error?.message || 'Cloudinary upload failed.');
-      }
+  try {
+    const body = await uploadToCloudinary(formData, (percent) => setProgress(percent));
+    const uploadedUrl = body.secure_url;
+    console.log('Cloudinary media URL:', uploadedUrl);
+    hideProgress();
 
-      const uploadedUrl = body.secure_url;
-      console.log('Cloudinary image URL:', uploadedUrl);
+    const newItem = {
+      id: imageData.length + 1,
+      title,
+      category,
+      author,
+      downloads: '0',
+      tags: tags.length ? tags : [category.toLowerCase()],
+      url: uploadedUrl,
+      isUploaded: true
+    };
 
-      const newItem = {
-        id: imageData.length + 1,
-        title,
-        category,
-        author,
-        downloads: '0',
-        tags: tags.length ? tags : [category.toLowerCase()],
-        url: uploadedUrl,
-        isUploaded: true
-      };
+    // Add locally right away so the uploader sees it immediately on this device.
+    imageData.unshift(newItem);
+    saveUploadsToLocalStorage();
+    addCategoryIfMissing(category);
+    selectedCategory = category;
+    updateActiveCategory();
+    renderGrid();
+    renderCollections();
 
-      // Add locally right away so the uploader sees it immediately on this device.
-      imageData.unshift(newItem);
-      saveUploadsToLocalStorage();
-      addCategoryIfMissing(category);
-      selectedCategory = category;
-      updateActiveCategory();
-      renderGrid();
-      renderCollections();
+    // Reset the form fields.
+    uploadFileInput.value = '';
+    uploadTitleInput.value = '';
+    uploadAuthorInput.value = '';
+    uploadTagsInput.value = '';
+    updateUploadCategoryInfo();
+    resetDropzoneLabel();
 
-      // Reset the form fields.
-      uploadFileInput.value = '';
-      uploadTitleInput.value = '';
-      uploadAuthorInput.value = '';
-      uploadTagsInput.value = '';
-      updateUploadCategoryInfo();
+    // Sync to Firestore so other devices can see it, with clear status feedback.
+    const dbRef = getFirestoreReference();
+    if (!dbRef) {
+      const msg = `${mediaLabel} uploaded, but sirf is device par dikhega — Firestore connect nahi ho paya.`;
+      uploadStatus.textContent = msg;
+      showToast(msg, 'error');
+      uploadSubmit.disabled = false;
+      return;
+    }
 
-      // NEW: sync to Firestore so other devices can see it, with clear status feedback.
-      const dbRef = getFirestoreReference();
-      if (!dbRef) {
-        uploadStatus.textContent =
-          'Uploaded, but sirf is device par dikhega — Firestore connect nahi ho paya (dusre devices par sync nahi hoga).';
-        uploadSubmit.disabled = false;
-        return;
-      }
+    uploadStatus.textContent = `${mediaLabel} uploaded — syncing to other devices...`;
 
-      uploadStatus.textContent = 'Uploaded — syncing to other devices...';
-
-      dbRef.collection('uploadedImages').add({
+    try {
+      await dbRef.collection('uploadedImages').add({
         title: newItem.title,
         category: newItem.category,
         author: newItem.author,
@@ -535,23 +693,24 @@ function handleUpload() {
         tags: newItem.tags,
         url: newItem.url,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      }).then(() => {
-        uploadStatus.textContent = 'Upload successful — ab yeh sabhi devices par dikhegi.';
-        uploadSubmit.disabled = false;
-      }).catch((error) => {
-        console.error('Firestore save error:', error);
-        uploadStatus.textContent =
-          'Cloudinary par upload ho gaya, lekin dusre devices ke liye sync FAIL ho gaya: ' +
-          (error && error.message ? error.message : 'Unknown Firestore error') +
-          ' (Firestore rules ya database setup check karein)';
-        uploadSubmit.disabled = false;
       });
-    })
-    .catch((error) => {
-      console.error('Cloudinary upload error:', error);
-      uploadStatus.textContent = `Upload failed: ${error.message}`;
+      uploadStatus.textContent = `${mediaLabel} upload successful — ab yeh sabhi devices par dikhegi.`;
+      showToast(`${mediaLabel} uploaded successfully!`, 'success');
+    } catch (error) {
+      console.error('Firestore save error:', error);
+      const msg = `Cloudinary par upload ho gaya, lekin dusre devices ke liye sync FAIL ho gaya: ${error.message || 'Unknown Firestore error'} (Firestore rules check karein)`;
+      uploadStatus.textContent = msg;
+      showToast('Sync fail ho gaya — Firestore rules check karein.', 'error');
+    } finally {
       uploadSubmit.disabled = false;
-    });
+    }
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    uploadStatus.textContent = `Upload failed: ${error.message}`;
+    showToast(`Upload failed: ${error.message}`, 'error');
+    hideProgress();
+    uploadSubmit.disabled = false;
+  }
 }
 
 // User actions: upload image, search images, and use Enter key for search.
@@ -627,8 +786,6 @@ if (dbRef) {
         renderCollections();
       }
     }, (error) => {
-      // NEW: surface this error visibly, not just in console, since it explains
-      // why other devices never receive uploads made elsewhere.
       console.error('Firestore realtime load error:', error);
       if (uploadStatus) {
         uploadStatus.textContent =
@@ -649,7 +806,7 @@ if (menuToggle) {
     nav.classList.toggle("active");
   });
 }
-// NAV CLOSE ON CLICK (NEW 🔥)
+// NAV CLOSE ON CLICK
 document.querySelectorAll("nav a").forEach(link => {
   link.addEventListener("click", () => {
     nav.classList.remove("active");
@@ -667,11 +824,9 @@ window.addEventListener("scroll", () => {
   let currentScroll = window.pageYOffset;
 
   if (currentScroll > lastScroll && currentScroll > 50) {
-    // scroll down
     header.classList.add("hide");
     navArrow.classList.add("show");
   } else {
-    // scroll up
     header.classList.remove("hide");
     navArrow.classList.remove("show");
   }
@@ -679,7 +834,6 @@ window.addEventListener("scroll", () => {
   lastScroll = currentScroll;
 });
 
-// arrow click → show navbar
 if (navArrow) {
   navArrow.addEventListener("click", () => {
     header.classList.remove("hide");
