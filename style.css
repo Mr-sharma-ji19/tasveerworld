@@ -79,7 +79,7 @@ header.scrolled {
   border-bottom-color: var(--border);
 }
 
-.header-actions {
+.nav-utility {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1020,10 +1020,6 @@ footer {
     font-size: 16px;
   }
 
-  .header-actions {
-    flex-shrink: 0;
-  }
-
   nav {
     position: absolute;
     top: 100%;
@@ -1059,16 +1055,22 @@ footer {
     margin-top: 6px;
   }
 
-  .header-actions {
-    gap: 6px;
+  /* Theme toggle + Admin login now live inside the nav dropdown,
+     shown as a row below the links once the menu is opened. */
+  .nav-utility {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
   }
 
-  .admin-button,
-  #themeToggle {
+  .nav-utility .button {
+    flex: 1;
+    margin-left: 0;
     width: auto;
-    padding: 8px 12px;
+    padding: 10px 12px;
     font-size: 13px;
-    margin-left: 6px;
   }
 
   .hero {
