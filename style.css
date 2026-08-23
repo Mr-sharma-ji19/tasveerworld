@@ -990,27 +990,56 @@ footer {
   }
 
   .brand {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    overflow: hidden;
+  }
+
+  .brand > div {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .brand > div > div:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1rem;
+  }
+
+  .brand > div > div:last-child {
+    display: none;
   }
 
   #menuToggle {
     display: block !important;
+    flex-shrink: 0;
     width: 40px;
     height: 40px;
     padding: 0;
     font-size: 16px;
   }
 
+  .header-actions {
+    flex-shrink: 0;
+  }
+
   nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     width: 100%;
     display: none;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 12px;
-    background: rgba(11, 17, 32, 0.97);
-    padding: 16px;
-    border-radius: 12px;
+    align-items: stretch;
+    gap: 4px;
+    margin-top: 0;
+    background: rgba(11, 17, 32, 0.98);
+    backdrop-filter: blur(18px);
+    padding: 14px 16px 18px;
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
   }
 
   :root[data-theme="light"] nav {
@@ -1019,6 +1048,15 @@ footer {
 
   nav.active {
     display: flex;
+  }
+
+  nav a:not(.button) {
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav a.button {
+    margin-top: 6px;
   }
 
   .header-actions {
