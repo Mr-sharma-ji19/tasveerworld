@@ -63,6 +63,7 @@ const ownerName = 'Ritesh Sharma';
 const adminPassword = 'tasveerworldAdmin';
 let isAdmin = localStorage.getItem('tasveerworldAdmin') === 'true';
 let db = null;
+let firebaseReady = false; // NEW: tracks whether Firestore actually initialized
 
 // Initialize Firebase and Firestore connection.
 // This is required only if Firebase SDK is loaded and properly configured.
@@ -80,10 +81,12 @@ function initFirebase() {
   try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
+    firebaseReady = true;
     console.log('Firebase initialized successfully.');
   } catch (error) {
     if (error.message && error.message.includes('already exists')) {
       db = firebase.firestore();
+      firebaseReady = true;
     } else {
       console.error('Firebase initialization error:', error);
     }
@@ -467,6 +470,7 @@ function handleUpload() {
   }
 
   uploadStatus.textContent = 'Uploading image to Cloudinary...';
+  uploadSubmit.disabled = true; // prevent double-submits while in flight
 
   const formData = new FormData();
   formData.append('file', file);
@@ -484,7 +488,6 @@ function handleUpload() {
 
       const uploadedUrl = body.secure_url;
       console.log('Cloudinary image URL:', uploadedUrl);
-      uploadStatus.textContent = 'Upload successful.';
 
       const newItem = {
         id: imageData.length + 1,
@@ -497,37 +500,57 @@ function handleUpload() {
         isUploaded: true
       };
 
-      const dbRef = getFirestoreReference();
-      if (dbRef) {
-        dbRef.collection('uploadedImages').add({
-          title: newItem.title,
-          category: newItem.category,
-          author: newItem.author,
-          downloads: newItem.downloads,
-          tags: newItem.tags,
-          url: newItem.url,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        }).catch((error) => {
-          console.error('Firestore save error:', error);
-        });
-      }
-
+      // Add locally right away so the uploader sees it immediately on this device.
       imageData.unshift(newItem);
       saveUploadsToLocalStorage();
       addCategoryIfMissing(category);
+      selectedCategory = category;
+      updateActiveCategory();
+      renderGrid();
+      renderCollections();
+
+      // Reset the form fields.
       uploadFileInput.value = '';
       uploadTitleInput.value = '';
       uploadAuthorInput.value = '';
       uploadTagsInput.value = '';
-      selectedCategory = category;
-      updateActiveCategory();
       updateUploadCategoryInfo();
-      renderGrid();
-      renderCollections();
+
+      // NEW: sync to Firestore so other devices can see it, with clear status feedback.
+      const dbRef = getFirestoreReference();
+      if (!dbRef) {
+        uploadStatus.textContent =
+          'Uploaded, but sirf is device par dikhega — Firestore connect nahi ho paya (dusre devices par sync nahi hoga).';
+        uploadSubmit.disabled = false;
+        return;
+      }
+
+      uploadStatus.textContent = 'Uploaded — syncing to other devices...';
+
+      dbRef.collection('uploadedImages').add({
+        title: newItem.title,
+        category: newItem.category,
+        author: newItem.author,
+        downloads: newItem.downloads,
+        tags: newItem.tags,
+        url: newItem.url,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }).then(() => {
+        uploadStatus.textContent = 'Upload successful — ab yeh sabhi devices par dikhegi.';
+        uploadSubmit.disabled = false;
+      }).catch((error) => {
+        console.error('Firestore save error:', error);
+        uploadStatus.textContent =
+          'Cloudinary par upload ho gaya, lekin dusre devices ke liye sync FAIL ho gaya: ' +
+          (error && error.message ? error.message : 'Unknown Firestore error') +
+          ' (Firestore rules ya database setup check karein)';
+        uploadSubmit.disabled = false;
+      });
     })
     .catch((error) => {
       console.error('Cloudinary upload error:', error);
       uploadStatus.textContent = `Upload failed: ${error.message}`;
+      uploadSubmit.disabled = false;
     });
 }
 
@@ -604,9 +627,19 @@ if (dbRef) {
         renderCollections();
       }
     }, (error) => {
+      // NEW: surface this error visibly, not just in console, since it explains
+      // why other devices never receive uploads made elsewhere.
       console.error('Firestore realtime load error:', error);
+      if (uploadStatus) {
+        uploadStatus.textContent =
+          'Note: is device par dusre devices ki uploads load nahi ho paayi (Firestore error: ' +
+          (error && error.message ? error.message : 'unknown') + ')';
+      }
     });
+} else {
+  console.warn('Firestore not available — cross-device sync is disabled. Only Cloudinary + localStorage uploads will show on this device.');
 }
+
 // MOBILE NAV TOGGLE
 const menuToggle = document.getElementById("menuToggle");
 const nav = document.querySelector("nav");
